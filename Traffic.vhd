@@ -4,7 +4,8 @@ USE ieee.std_logic_1164.all;
 ENTITY Traffic IS
 	PORT ( SW : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
 			 Clock_50 : IN STD_LOGIC;
-			 LEDR : OUT STD_LOGIC_VECTOR(17 DOWNTO 6));
+			 LEDR : OUT STD_LOGIC_VECTOR(17 DOWNTO 6);
+			 LEDG : OUT STD_LOGIC_VECTOR(3 DOWNTO 0));
 END Traffic;
 
 ARCHITECTURE Behavior OF Traffic IS
@@ -18,19 +19,25 @@ ARCHITECTURE Behavior OF Traffic IS
     PORT(C                :IN STD_LOGIC_VECTOR(1 DOWNTO 0);
          COLOR          :OUT STD_LOGIC_VECTOR(2 DOWNTO 0));
   END COMPONENT;
-  
+
   COMPONENT UpCounter
 	PORT( myClock : IN STD_LOGIC;
 		  O : OUT STD_LOGIC_VECTOR(2 DOWNTO 0));
    END COMPONENT;
-	
+
 	COMPONENT Clockz
 		PORT ( Clock_50 : IN STD_LOGIC;
 				C : BUFFER STD_LOGIC);
 	 END COMPONENT;
-		
 
-  SIGNAL R, G, Y, A, B : STD_LOGIC_VECTOR(1 DOWNTO 0);
+	COMPONENT WALK
+		PORT (Blink : IN STD_LOGIC;
+					LSTATUS: IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+					WSTATUS : OUT STD_LOGIC);
+	  END COMPONENT;
+
+
+  SIGNAL R, G, Y, A, B, C, D : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL S : STD_LOGIC_VECTOR(2 DOWNTO 0);
   SIGNAL L : STD_LOGIC;
 
@@ -44,11 +51,21 @@ BEGIN
  S0: UpCounter PORT MAP(L, S);
 
  A0: CONTROL PORT MAP (S, R, G, G, Y, R, R, R, R, A);
- B0 : LIGHT PORT MAP (A, LEDR(17 DOWNTO 15));
+ B0: LIGHT PORT MAP (A, LEDR(17 DOWNTO 15));
+ W0: WALK PORT MAP (L, A, LEDG(0));
 
  C0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, B);
- D0 : LIGHT PORT MAP (B, LEDR(14 DOWNTO 12));
- 
+ D0: LIGHT PORT MAP (B, LEDR(14 DOWNTO 12));
+ W1: WALK PORT MAP (L, B, LEDG(1));
+
+ E0: CONTROL PORT MAP (S, R, G, G, Y, R, R, R, R, C);
+ F0: LIGHT PORT MAP (C, LEDR(11 DOWNTO 9));
+ W2: WALK PORT MAP (L, C, LEDG(2));
+
+ G0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, D);
+ H0: LIGHT PORT MAP (D, LEDR(8 DOWNTO 6));
+ W3: WALK PORT MAP (L, D, LEDG(3));
+
 END Behavior;
 
 LIBRARY ieee;
@@ -71,28 +88,28 @@ ARCHITECTURE Behavior OF CONTROL IS
 BEGIN
 			--LEDR <= SW;
 			--bit 0
-			OUTPUT1(0) <= ((NOT S(0) And a(0)) OR (S(0) And b(0))); 
+			OUTPUT1(0) <= ((NOT S(0) And a(0)) OR (S(0) And b(0)));
 			OUTPUT2(0) <= ((NOT S(0) And c(0)) OR (S(0) And d(0)));
 			OUTPUT3(0) <= ((NOT S(0) And e(0)) OR (S(0) And f(0)));
 			OUTPUT4(0) <= ((NOT S(0) And g(0)) OR (S(0) And h(0)));
-			
+
 			OUTPUT5(0) <= ((NOT S(1) And OUTPUT1(0)) OR (S(1) And OUTPUT2(0)));
 			OUTPUT6(0) <= ((NOT S(1) And OUTPUT3(0)) OR (S(1) And OUTPUT4(0)));
-			
-			M(0) <=  ((NOT S(2) And OUTPUT5(0)) OR (S(2) And OUTPUT6(0))); 
-			
+
+			M(0) <=  ((NOT S(2) And OUTPUT5(0)) OR (S(2) And OUTPUT6(0)));
+
 			--bit 1
-			OUTPUT1(1) <= ((NOT S(0) And a(1)) OR (S(0) And b(1))); 
+			OUTPUT1(1) <= ((NOT S(0) And a(1)) OR (S(0) And b(1)));
 			OUTPUT2(1) <= ((NOT S(0) And c(1)) OR (S(0) And d(1)));
 			OUTPUT3(1) <= ((NOT S(0) And e(1)) OR (S(0) And f(1)));
 			OUTPUT4(1) <= ((NOT S(0) And g(1)) OR (S(0) And h(1)));
-			
+
 			OUTPUT5(1) <= ((NOT S(1) And OUTPUT1(1)) OR (S(1) And OUTPUT2(1)));
 			OUTPUT6(1) <= ((NOT S(1) And OUTPUT3(1)) OR (S(1) And OUTPUT4(1)));
-			
-			M(1) <=  ((NOT S(2) And OUTPUT5(1)) OR (S(2) And OUTPUT6(1))); 
-			
-			
+
+			M(1) <=  ((NOT S(2) And OUTPUT5(1)) OR (S(2) And OUTPUT6(1)));
+
+
 END Behavior;
 
 LIBRARY ieee;
@@ -103,12 +120,30 @@ ENTITY LIGHT IS
         COLOR : OUT STD_LOGIC_VECTOR(2 DOWNTO 0));
 END LIGHT;
 
-ARCHITECTURE Behavior OF LIGHT IS 
+ARCHITECTURE Behavior OF LIGHT IS
 BEGIN
 		COLOR(0) <= NOT(C(1)) AND NOT(C(0)); --green light
 		COLOR(1) <= NOT(C(1)) AND C(0); --yellow light
 		COLOR(2) <= C(1); --red light
-		
+
+END Behavior;
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+
+ENTITY WALK IS
+  PORT (Blink : IN STD_LOGIC;
+				LSTATUS: IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+        WSTATUS : OUT STD_LOGIC);
+END WALK;
+
+ARCHITECTURE Behavior OF WALK IS
+BEGIN
+		WITH LSTATUS SELECT
+			WSTATUS <= '1' WHEN '00',
+							<= Blink WHEN '01',
+							<= '0' WHEN OTHERS;
+
 END Behavior;
 
 
@@ -191,23 +226,21 @@ ARCHITECTURE Behavior OF UpCounter IS
     PORT(D, Clock   :IN STD_LOGIC;
          Q          :OUT STD_LOGIC);
   END COMPONENT;
-  
+
   SIGNAL X, Y, Z, V, W : STD_LOGIC;
-  
+
   BEGIN
   W <= myClock;
-  
+
   X0 : myflipflop PORT MAP ('1', W, X);
   O(0) <= X; --LSB (Bit 0)
-  
+
   Y0 : myflipflop PORT MAP (X, W, Y);
   O(1) <= Y; --Bit 1
-  
+
   V <= X AND Y;
-  
+
   Z0 : myflipflop PORT MAP (V, W, Z);
   O(2) <= Z; --MSB (Bit 2)
-  
+
   END Behavior;
-
-
