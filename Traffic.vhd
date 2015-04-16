@@ -38,6 +38,7 @@ ARCHITECTURE Behavior OF Traffic IS
 
 
   SIGNAL R, G, Y, A, B, C, D : STD_LOGIC_VECTOR(1 DOWNTO 0);
+	SIGNAL WA, WB, WC, WD : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL S : STD_LOGIC_VECTOR(2 DOWNTO 0);
   SIGNAL L : STD_LOGIC;
 
@@ -46,25 +47,33 @@ BEGIN
  G <= "00";
  Y <= "01";
  R <= "10";
- L0: Clockz PORT MAP (Clock_50, L);
+ L0: Clockz PORT MAP (Clock_50, L); --Our Clock Signal
 
- S0: UpCounter PORT MAP(L, S);
+ S0: UpCounter PORT MAP(L, S); --Run through the Select options
 
- A0: CONTROL PORT MAP (S, R, G, G, Y, R, R, R, R, A);
- B0: LIGHT PORT MAP (A, LEDR(17 DOWNTO 15));
- W0: WALK PORT MAP (L, A, LEDG(0));
+ A0: CONTROL PORT MAP (S, R, G, G, Y, R, R, R, R, A); --Light 1's State
+ B0: LIGHT PORT MAP (A, LEDR(17 DOWNTO 15)); --Control Light 1
+ WA(0) <= NOT SW(2) OR SW(2) AND A(0); --set up the Walk signal connected to light 1
+ WA(1) <= NOT SW(2) OR SW(2) AND A(1); --such that it displays Don't walk until the request is given, then it waits until it is safe to switch to walk
+ W0: WALK PORT MAP (L, WA, LEDG(0)); --control the Walk Sign.
 
- C0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, B);
+ C0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, B); --Set up for second Light and its Walk sign
  D0: LIGHT PORT MAP (B, LEDR(14 DOWNTO 12));
- W1: WALK PORT MAP (L, B, LEDG(1));
+ WB(0) <= NOT SW(1) OR SW(1) AND B(0);
+ WB(1) <= NOT SW(1) OR SW(1) AND B(1);
+ W1: WALK PORT MAP (L, WB, LEDG(1));
 
- E0: CONTROL PORT MAP (S, R, G, G, Y, R, R, R, R, C);
+ E0: CONTROL PORT MAP (S, R, G, G, Y, R, R, R, R, C); --Set up for third Light and its Walk sign
  F0: LIGHT PORT MAP (C, LEDR(11 DOWNTO 9));
- W2: WALK PORT MAP (L, C, LEDG(2));
+ WC(0) <= NOT SW(2) OR SW(2) AND C(0);
+ WC(1) <= NOT SW(2) OR SW(2) AND C(1);
+ W2: WALK PORT MAP (L, WC, LEDG(2));
 
- G0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, D);
+ G0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, D); --Set up for third Light and its Walk sign
  H0: LIGHT PORT MAP (D, LEDR(8 DOWNTO 6));
- W3: WALK PORT MAP (L, D, LEDG(3));
+ WD(0) <= NOT SW(1) OR SW(1) AND D(0);
+ WD(1) <= NOT SW(1) OR SW(1) AND D(1);
+ W3: WALK PORT MAP (L, WD, LEDG(3));
 
 END Behavior;
 
@@ -140,9 +149,9 @@ END WALK;
 ARCHITECTURE Behavior OF WALK IS
 BEGIN
 		WITH LSTATUS SELECT
-			WSTATUS <= '1' WHEN '00',
-							<= Blink WHEN '01',
-							<= '0' WHEN OTHERS;
+			WSTATUS <= '1' WHEN "00",
+							   Blink WHEN "01",
+							   '0' WHEN OTHERS;
 
 END Behavior;
 
