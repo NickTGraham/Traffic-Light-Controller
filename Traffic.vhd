@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
 ENTITY Traffic IS
-	PORT ( SW : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
+	PORT ( SW : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
 			 Clock_50 : IN STD_LOGIC;
 			 LEDR : OUT STD_LOGIC_VECTOR(17 DOWNTO 6);
 			 LEDG : OUT STD_LOGIC_VECTOR(3 DOWNTO 0));
@@ -47,6 +47,7 @@ BEGIN
  G <= "00";
  Y <= "01";
  R <= "10";
+ WITH SW(6) SELECT
  L0: Clockz PORT MAP (Clock_50, L); --Our Clock Signal
 
  S0: UpCounter PORT MAP(L, S); --Run through the Select options
@@ -252,4 +253,41 @@ ARCHITECTURE Behavior OF UpCounter IS
   Z0 : myflipflop PORT MAP (V, W, Z);
   O(2) <= Z; --MSB (Bit 2)
 
-  END Behavior;
+END Behavior;
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+
+ENTITY ModClock IS
+
+	PORT ( Clock_50, Trigger : IN STD_LOGIC;
+				 Light : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+				 C : BUFFER STD_LOGIC);
+
+END ModClock;
+
+
+ARCHITECTURE Behavior OF ModClock IS --clock behavior
+
+	Signal Count : INTEGER RANGE 0 to 250000000; --clock frequency
+
+BEGIN
+	PROCESS
+		BEGIN
+			wait until Clock_50='1';
+
+				Count<=Count+1;
+
+			if (Count = 250000000) Then
+
+				Count<=0;
+				if(Trigger = '0') Then
+					C <= C;
+				elsif (Light = "00") Then
+					C<=C;
+				else
+					C <= Not C;
+				end if;
+			end if;
+			END PROCESS;
+END Behavior;
