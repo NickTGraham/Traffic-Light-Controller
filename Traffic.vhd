@@ -36,6 +36,12 @@ ARCHITECTURE Behavior OF Traffic IS
 					WSTATUS : OUT STD_LOGIC);
 	  END COMPONENT;
 
+	COMPONENT MODCLOCK
+		PORT ( Clock_50, Trigger : IN STD_LOGIC;
+					Light : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+					C : BUFFER STD_LOGIC);
+	END COMPONENT;
+
 
   SIGNAL R, G, Y, A, B, C, D : STD_LOGIC_VECTOR(1 DOWNTO 0);
 	SIGNAL WA, WB, WC, WD : STD_LOGIC_VECTOR(1 DOWNTO 0);
@@ -51,7 +57,7 @@ BEGIN
  T <= SW(5) OR SW(4);
 
  L0: Clockz PORT MAP (Clock_50, L1);
- L0: ModClock PORT MAP (Clock_50, T, A, L2);
+ L5: ModClock PORT MAP (Clock_50, T, A, L2);
 
  Process
 	Begin
@@ -61,7 +67,7 @@ BEGIN
 		 L <= L2;
 	End if;
  End Process;
- L0: Clockz PORT MAP (Clock_50, L); --Our Clock Signal
+ --L0: Clockz PORT MAP (Clock_50, L); --Our Clock Signal
 
  S0: UpCounter PORT MAP(L, S); --Run through the Select options
 
