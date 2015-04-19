@@ -40,7 +40,7 @@ ARCHITECTURE Behavior OF Traffic IS
   SIGNAL R, G, Y, A, B, C, D : STD_LOGIC_VECTOR(1 DOWNTO 0);
 	SIGNAL WA, WB, WC, WD : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL S : STD_LOGIC_VECTOR(2 DOWNTO 0);
-  SIGNAL L, T : STD_LOGIC;
+  SIGNAL L, T, L1, L2 : STD_LOGIC;
 
 
 BEGIN
@@ -49,12 +49,16 @@ BEGIN
  R <= "10";
 
  T <= SW(5) OR SW(4);
+
+ L0: Clockz PORT MAP (Clock_50, L1);
+ L0: ModClock PORT MAP (Clock_50, T, A, L2);
+
  Process
 	Begin
-		if (SW(6) = '0')
-		 L0: Clockz PORT MAP (Clock_50, L);
+		if (SW(6) = '0') then
+		 L <= L1;
 	  else
-		 L0: ModClock PORT MAP (Clock_50, T, A, L);
+		 L <= L2;
 	End if;
  End Process;
  L0: Clockz PORT MAP (Clock_50, L); --Our Clock Signal
