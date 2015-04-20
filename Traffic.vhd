@@ -5,7 +5,7 @@ ENTITY Traffic IS
 	PORT ( SW : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
 			 Clock_50 : IN STD_LOGIC;
 			 LEDR : OUT STD_LOGIC_VECTOR(17 DOWNTO 6);
-			 LEDG : OUT STD_LOGIC_VECTOR(3 DOWNTO 0));
+			 LEDG : OUT STD_LOGIC_VECTOR(5 DOWNTO 0));
 END Traffic;
 
 ARCHITECTURE Behavior OF Traffic IS
@@ -58,16 +58,10 @@ BEGIN
 
  L0: Clockz PORT MAP (Clock_50, L1);
  L5: ModClock PORT MAP (Clock_50, T, A, L2);
+ LEDG(5) <= L2; --test the clock outputs
+ LEDG(4) <= L1;
 
- Process
-	Begin
-		if (SW(6) = '0') then
-		 L <= L1;
-	  else
-		 L <= L2;
-	End if;
- End Process;
- --L0: Clockz PORT MAP (Clock_50, L); --Our Clock Signal
+ L <= (Not SW(6) And L1) OR (SW(6) And L2);
 
  S0: UpCounter PORT MAP(L, S); --Run through the Select options
 
@@ -199,7 +193,7 @@ BEGIN
 
 				Count<=Count+1;
 
-			if (Count = 250000000) Then
+			if (Count = 25000000) Then --dropped a zero for testing
 
 				Count<=0;
 
@@ -297,15 +291,15 @@ BEGIN
 
 				Count<=Count+1;
 
-			if (Count = 250000000) Then
+			if (Count = 25000000) Then --droped a zero for testing
 
 				Count<=0;
-				if(Trigger = '0') Then
-					C <= C;
-				elsif (Light = "00") Then
-					C<=C;
-				else
+				if (Not (Light = "00")) Then
+					C<= NOT C;
+				elsif (Trigger = '1') Then
 					C <= Not C;
+				else
+					C <= C;
 				end if;
 			end if;
 			END PROCESS;
