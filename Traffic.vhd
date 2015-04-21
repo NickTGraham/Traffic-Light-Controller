@@ -26,6 +26,7 @@ ARCHITECTURE Behavior OF Traffic IS
    END COMPONENT;
 
 	COMPONENT Clockz
+	  Generic (N : integer);
 		PORT ( Clock_50 : IN STD_LOGIC;
 				C : BUFFER STD_LOGIC);
 	 END COMPONENT;
@@ -46,7 +47,7 @@ ARCHITECTURE Behavior OF Traffic IS
   SIGNAL R, G, Y, A, B, C, D : STD_LOGIC_VECTOR(1 DOWNTO 0);
 	SIGNAL WA, WB, WC, WD : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL S : STD_LOGIC_VECTOR(2 DOWNTO 0);
-  SIGNAL L, T, L1, L2 : STD_LOGIC;
+  SIGNAL L, T, L1, L2, Bl : STD_LOGIC;
 
 
 BEGIN
@@ -56,10 +57,14 @@ BEGIN
 
  T <= SW(5) OR SW(4);
 
- L0: Clockz PORT MAP (Clock_50, L1);
+ L0: Clockz Generic MAP (25000000)
+						PORT MAP (Clock_50, L1);
  L5: ModClock PORT MAP (Clock_50, T, A, L2);
  LEDG(5) <= L2; --test the clock outputs
  LEDG(4) <= L1;
+
+ B0: Clockz Generic MAP (5000000)
+						PORT MAP (Clock_50, Bl);
 
  L <= (Not SW(6) And L1) OR (SW(6) And L2);
 
@@ -69,25 +74,25 @@ BEGIN
  B0: LIGHT PORT MAP (A, LEDR(17 DOWNTO 15)); --Control Light 1
  WA(0) <= (NOT SW(2)) OR (SW(2) AND A(0)); --set up the Walk signal connected to light 1
  WA(1) <= (NOT SW(2)) OR (SW(2) AND A(1)); --such that it displays Don't walk until the request is given, then it waits until it is safe to switch to walk
- W0: WALK PORT MAP (L, WA, LEDG(0)); --control the Walk Sign.
+ W0: WALK PORT MAP (Bl, WA, LEDG(0)); --control the Walk Sign.
 
  C0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, B); --Set up for second Light and its Walk sign
  D0: LIGHT PORT MAP (B, LEDR(14 DOWNTO 12));
  WB(0) <= (NOT SW(1)) OR (SW(1) AND B(0));
  WB(1) <= (NOT SW(1)) OR (SW(1) AND B(1));
- W1: WALK PORT MAP (L, WB, LEDG(1));
+ W1: WALK PORT MAP (Bl, WB, LEDG(1));
 
  E0: CONTROL PORT MAP (S, R, G, G, Y, R, R, R, R, C); --Set up for third Light and its Walk sign
  F0: LIGHT PORT MAP (C, LEDR(11 DOWNTO 9));
  WC(0) <= (NOT SW(2)) OR (SW(2) AND C(0));
  WC(1) <= (NOT SW(2)) OR (SW(2) AND C(1));
- W2: WALK PORT MAP (L, WC, LEDG(2));
+ W2: WALK PORT MAP (Bl, WC, LEDG(2));
 
  G0: CONTROL PORT MAP (S, R, R, R, R, R, G, G, Y, D); --Set up for third Light and its Walk sign
  H0: LIGHT PORT MAP (D, LEDR(8 DOWNTO 6));
  WD(0) <= (NOT SW(1)) OR (SW(1) AND D(0));
  WD(1) <= (NOT SW(1)) OR (SW(1) AND D(1));
- W3: WALK PORT MAP (L, WD, LEDG(3));
+ W3: WALK PORT MAP (Bl, WD, LEDG(3));
 
 END Behavior;
 
@@ -174,7 +179,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
 ENTITY Clockz IS
-
+	Generic (N : integer);
 	PORT ( Clock_50 : IN STD_LOGIC;
 
 				 C : BUFFER STD_LOGIC);
@@ -184,7 +189,7 @@ END Clockz;
 
 ARCHITECTURE Behavior OF Clockz IS --clock behavior
 
-	Signal Count : INTEGER RANGE 0 to 250000000; --clock frequency
+	Signal Count : INTEGER RANGE 0 to N; --clock frequency
 
 BEGIN
 	PROCESS
@@ -193,7 +198,7 @@ BEGIN
 
 				Count<=Count+1;
 
-			if (Count = 25000000) Then --dropped a zero for testing
+			if (Count = N) Then --dropped a zero for testing
 
 				Count<=0;
 
