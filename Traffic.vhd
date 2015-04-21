@@ -26,7 +26,7 @@ ARCHITECTURE Behavior OF Traffic IS
    END COMPONENT;
 
 	COMPONENT Clockz
-	  Generic (N : integer);
+		Generic (N : INTEGER);
 		PORT ( Clock_50 : IN STD_LOGIC;
 				C : BUFFER STD_LOGIC);
 	 END COMPONENT;
@@ -38,6 +38,7 @@ ARCHITECTURE Behavior OF Traffic IS
 	  END COMPONENT;
 
 	COMPONENT MODCLOCK
+		Generic (N : INTEGER);
 		PORT ( Clock_50, Trigger : IN STD_LOGIC;
 					Light : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
 					C : BUFFER STD_LOGIC);
@@ -45,7 +46,7 @@ ARCHITECTURE Behavior OF Traffic IS
 
 
   SIGNAL R, G, Y, A, B, C, D : STD_LOGIC_VECTOR(1 DOWNTO 0);
-	SIGNAL WA, WB, WC, WD : STD_LOGIC_VECTOR(1 DOWNTO 0);
+  SIGNAL WA, WB, WC, WD : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL S : STD_LOGIC_VECTOR(2 DOWNTO 0);
   SIGNAL L, T, L1, L2, Bl : STD_LOGIC;
 
@@ -55,16 +56,15 @@ BEGIN
  Y <= "01";
  R <= "10";
 
- T <= SW(5) OR SW(4);
+ T <= SW(5) OR SW(4) OR SW(1);
 
- L0: Clockz Generic MAP (25000000)
-						PORT MAP (Clock_50, L1);
- L5: ModClock PORT MAP (Clock_50, T, A, L2);
- LEDG(5) <= L2; --test the clock outputs
- LEDG(4) <= L1;
-
- B0: Clockz Generic MAP (5000000)
-						PORT MAP (Clock_50, Bl);
+ L0: Clockz Generic Map (50000000) --dropped a zero for testing
+				PORT MAP (Clock_50, L1);
+				
+ B9: Clockz Generic Map (25000000) --droped a zero for testing
+				PORT MAP (Clock_50, Bl);
+ L5: ModClock Generic Map (50000000) 
+				PORT MAP (Clock_50, T, A, L2);
 
  L <= (Not SW(6) And L1) OR (SW(6) And L2);
 
@@ -179,7 +179,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
 ENTITY Clockz IS
-	Generic (N : integer);
+	Generic (N : INTEGER);
 	PORT ( Clock_50 : IN STD_LOGIC;
 
 				 C : BUFFER STD_LOGIC);
@@ -277,7 +277,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
 ENTITY ModClock IS
-
+	GENERIC (N : integer);
 	PORT ( Clock_50, Trigger : IN STD_LOGIC;
 				 Light : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
 				 C : BUFFER STD_LOGIC);
@@ -287,7 +287,7 @@ END ModClock;
 
 ARCHITECTURE Behavior OF ModClock IS --clock behavior
 
-	Signal Count : INTEGER RANGE 0 to 250000000; --clock frequency
+	Signal Count : INTEGER RANGE 0 to N; --clock frequency
 
 BEGIN
 	PROCESS
@@ -296,7 +296,7 @@ BEGIN
 
 				Count<=Count+1;
 
-			if (Count = 25000000) Then --droped a zero for testing
+			if (Count = N) Then 
 
 				Count<=0;
 				if (Not (Light = "00")) Then
